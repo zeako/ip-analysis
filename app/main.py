@@ -1,7 +1,11 @@
-import ipaddress
+from ipaddress import IPv4Address
 from typing import Any, Optional
 
+import uvicorn
 from fastapi import FastAPI
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_cache.decorator import cache
 from pydantic import BaseModel
 
 
@@ -25,5 +29,14 @@ app = FastAPI()
 
 
 @app.get('/{ip_address}')
-def fetch_ip_analysis(ip_address: ipaddress.IPv4Address) -> IpAnalysisResponse:
-    return IpAnalysisResponse()
+@cache(expire=3600)
+async def fetch_ip_analysis(ip_address: IPv4Address) -> IpAnalysisResponse:
+    pass
+
+
+@app.on_event('startup')
+async def startup():
+    FastAPICache.init(InMemoryBackend())
+
+if __name__ == '__main__':
+    uvicorn.run("main:app", reload=True)
